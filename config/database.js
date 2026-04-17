@@ -18,7 +18,7 @@ module.exports = {
     logging: false
   },
   production: {
-    use_env_variable: 'postgresql://postgres:ConfianceIbovi1972@db.brqhowbqhkghnflxolnr.supabase.co:5432/postgres',
+    use_env_variable: 'DATABASE_URL',
     username: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
