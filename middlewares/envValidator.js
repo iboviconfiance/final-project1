@@ -62,14 +62,16 @@ function validateEnvironment(isProduction) {
   }
 
   // Base de données
-  if (!process.env.DB_HOST) errors.push({ variable: 'DB_HOST', severity: 'FATAL', message: 'Variable manquante.' });
-  if (!process.env.DB_NAME) errors.push({ variable: 'DB_NAME', severity: 'FATAL', message: 'Variable manquante.' });
-  if (!process.env.DB_USER) errors.push({ variable: 'DB_USER', severity: 'FATAL', message: 'Variable manquante.' });
-  if (!process.env.DB_PASS) {
-    if (isProduction) {
-      errors.push({ variable: 'DB_PASS', severity: 'FATAL', message: 'Mot de passe BDD manquant en production.' });
-    } else {
-      warnings.push({ variable: 'DB_PASS', severity: 'WARNING', message: 'Pas de mot de passe BDD (OK en dev local).' });
+  if (!process.env.DATABASE_URL) {
+    if (!process.env.DB_HOST) errors.push({ variable: 'DB_HOST', severity: 'FATAL', message: 'Variable manquante.' });
+    if (!process.env.DB_NAME) errors.push({ variable: 'DB_NAME', severity: 'FATAL', message: 'Variable manquante.' });
+    if (!process.env.DB_USER) errors.push({ variable: 'DB_USER', severity: 'FATAL', message: 'Variable manquante.' });
+    if (!process.env.DB_PASS) {
+      if (isProduction) {
+        errors.push({ variable: 'DB_PASS', severity: 'FATAL', message: 'Mot de passe BDD manquant en production.' });
+      } else {
+        warnings.push({ variable: 'DB_PASS', severity: 'WARNING', message: 'Pas de mot de passe BDD (OK en dev local).' });
+      }
     }
   }
 
@@ -89,13 +91,14 @@ function validateEnvironment(isProduction) {
     // CORS
     const corsOrigin = process.env.CORS_ORIGIN;
     if (!corsOrigin || corsOrigin === '*') {
-      errors.push({ variable: 'CORS_ORIGIN', severity: 'FATAL', message: 'CORS wildcard (*) interdit en production. Spécifiez votre domaine.' });
+      // Pour les étudiants, on abaisse l'erreur CORS à un Warning (on permet *)
+      warnings.push({ variable: 'CORS_ORIGIN', severity: 'WARNING', message: 'CORS wildcard (*) activé en production (OK pour devoir d\'école).' });
     }
 
     // DB_PASS en prod
     const dbPass = process.env.DB_PASS;
-    if (dbPass && dbPass.length < 12) {
-      errors.push({ variable: 'DB_PASS', severity: 'FATAL', message: `Mot de passe BDD trop court (${dbPass.length} chars). Minimum 12 en production.` });
+    if (!process.env.DATABASE_URL && dbPass && dbPass.length < 12) {
+      warnings.push({ variable: 'DB_PASS', severity: 'WARNING', message: `Mot de passe BDD court.` });
     }
   }
 
