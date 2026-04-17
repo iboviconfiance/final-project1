@@ -1,0 +1,72 @@
+{
+  "auth": {
+    "login_success": "Connexion réussie !",
+    "login_failed": "Email ou mot de passe incorrect.",
+    "register_success": "Inscription réalisée avec succès !",
+    "token_expired": "Session expirée. Veuillez vous reconnecter.",
+    "unauthorized": "Authentification requise.",
+    "forbidden": "Accès interdit.",
+    "org_suspended": "Votre organisation est suspendue. Contactez l'administrateur."
+  },
+  "profile": {
+    "updated": "Profil mis à jour avec succès.",
+    "not_found": "Utilisateur introuvable.",
+    "email_taken": "Cet email est déjà utilisé par un autre compte.",
+    "no_changes": "Aucun champ à mettre à jour."
+  },
+  "subscription": {
+    "no_active": "Aucun abonnement actif.",
+    "status_retrieved": "Statut récupéré avec succès.",
+    "expires_in": "Expire dans {{days}} jour(s).",
+    "payment_initiated": "Paiement initié. En attente de confirmation de l'opérateur.",
+    "already_active": "Vous avez déjà un abonnement actif pour ce plan.",
+    "plan_not_found": "Plan introuvable ou inactif pour votre organisation.",
+    "access_denied": "Accès refusé. Abonnement requis.",
+    "history_retrieved": "Historique récupéré avec succès."
+  },
+  "payment": {
+    "method_saved": "Méthode de paiement sauvegardée avec succès.",
+    "method_deleted": "Méthode de paiement supprimée.",
+    "method_not_found": "Aucune méthode de paiement sauvegardée.",
+    "confirmed": "Paiement confirmé avec succès.",
+    "failed": "Le paiement a échoué.",
+    "manual_validated": "Transaction validée manuellement."
+  },
+  "ticket": {
+    "created": "Ticket créé avec succès.",
+    "not_found": "Ticket introuvable.",
+    "closed_cannot_reply": "Impossible de répondre à un ticket fermé.",
+    "escalated": "Ticket escaladé vers le Super-Admin.",
+    "assigned": "Ticket assigné à {{email}}.",
+    "status_updated": "Statut du ticket mis à jour : {{status}}."
+  },
+  "admin": {
+    "stats_retrieved": "Statistiques du dashboard récupérées.",
+    "member_added": "Membre ajouté avec succès.",
+    "role_changed": "Rôle de {{email}} changé en \"{{role}}\".",
+    "cannot_change_own_role": "Vous ne pouvez pas changer votre propre rôle.",
+    "export_no_data": "Aucune transaction trouvée pour cette période.",
+    "template_updated": "Template mis à jour.",
+    "template_reset": "Template réinitialisé au contenu par défaut."
+  },
+  "superadmin": {
+    "org_suspended": "Organisation \"{{name}}\" suspendue.",
+    "org_activated": "Organisation \"{{name}}\" activée.",
+    "announcement_created": "Annonce créée et diffusée.",
+    "impersonation_started": "Impersonation de {{email}} activée (1h max).",
+    "impersonation_ended": "Session d'impersonation terminée."
+  },
+  "errors": {
+    "internal": "Erreur interne du serveur.",
+    "validation": "Erreur de validation.",
+    "rate_limited": "Trop de requêtes. Veuillez réessayer dans quelques minutes.",
+    "not_found": "Ressource introuvable.",
+    "invalid_dates": "Dates invalides. Format attendu : YYYY-MM-DD.",
+    "period_too_long": "La période ne peut pas dépasser 1 an."
+  },
+  "push": {
+    "subscribed": "Notifications push activées.",
+    "unsubscribed": "Notifications push désactivées.",
+    "already_subscribed": "Vous êtes déjà abonné aux notifications push."
+  }
+}

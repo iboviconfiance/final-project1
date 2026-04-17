@@ -1,0 +1,72 @@
+{
+  "auth": {
+    "login_success": "Login successful!",
+    "login_failed": "Incorrect email or password.",
+    "register_success": "Registration completed successfully!",
+    "token_expired": "Session expired. Please log in again.",
+    "unauthorized": "Authentication required.",
+    "forbidden": "Access denied.",
+    "org_suspended": "Your organization is suspended. Contact the administrator."
+  },
+  "profile": {
+    "updated": "Profile updated successfully.",
+    "not_found": "User not found.",
+    "email_taken": "This email is already used by another account.",
+    "no_changes": "No fields to update."
+  },
+  "subscription": {
+    "no_active": "No active subscription.",
+    "status_retrieved": "Status retrieved successfully.",
+    "expires_in": "Expires in {{days}} day(s).",
+    "payment_initiated": "Payment initiated. Waiting for operator confirmation.",
+    "already_active": "You already have an active subscription for this plan.",
+    "plan_not_found": "Plan not found or inactive for your organization.",
+    "access_denied": "Access denied. Subscription required.",
+    "history_retrieved": "History retrieved successfully."
+  },
+  "payment": {
+    "method_saved": "Payment method saved successfully.",
+    "method_deleted": "Payment method deleted.",
+    "method_not_found": "No saved payment method.",
+    "confirmed": "Payment confirmed successfully.",
+    "failed": "Payment failed.",
+    "manual_validated": "Transaction manually validated."
+  },
+  "ticket": {
+    "created": "Ticket created successfully.",
+    "not_found": "Ticket not found.",
+    "closed_cannot_reply": "Cannot reply to a closed ticket.",
+    "escalated": "Ticket escalated to Super-Admin.",
+    "assigned": "Ticket assigned to {{email}}.",
+    "status_updated": "Ticket status updated: {{status}}."
+  },
+  "admin": {
+    "stats_retrieved": "Dashboard statistics retrieved.",
+    "member_added": "Member added successfully.",
+    "role_changed": "Role of {{email}} changed to \"{{role}}\".",
+    "cannot_change_own_role": "You cannot change your own role.",
+    "export_no_data": "No transactions found for this period.",
+    "template_updated": "Template updated.",
+    "template_reset": "Template reset to default content."
+  },
+  "superadmin": {
+    "org_suspended": "Organization \"{{name}}\" suspended.",
+    "org_activated": "Organization \"{{name}}\" activated.",
+    "announcement_created": "Announcement created and broadcast.",
+    "impersonation_started": "Impersonation of {{email}} activated (1h max).",
+    "impersonation_ended": "Impersonation session ended."
+  },
+  "errors": {
+    "internal": "Internal server error.",
+    "validation": "Validation error.",
+    "rate_limited": "Too many requests. Please try again in a few minutes.",
+    "not_found": "Resource not found.",
+    "invalid_dates": "Invalid dates. Expected format: YYYY-MM-DD.",
+    "period_too_long": "The period cannot exceed 1 year."
+  },
+  "push": {
+    "subscribed": "Push notifications enabled.",
+    "unsubscribed": "Push notifications disabled.",
+    "already_subscribed": "You are already subscribed to push notifications."
+  }
+}

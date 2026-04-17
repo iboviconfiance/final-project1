@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SubFlow — Créer le Board Trello</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      max-width: 640px;
+      width: 100%;
+      padding: 2rem;
+    }
+    h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
+    .subtitle { color: #94a3b8; font-size: 0.9rem; margin-bottom: 2rem; }
+    .step {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .step h3 {
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .step h3 .num {
+      background: #6366f1;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    .step p { color: #94a3b8; font-size: 0.85rem; line-height: 1.5; }
+    a { color: #818cf8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    input, select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus { border-color: #6366f1; }
+    input::placeholder { color: #64748b; }
+    button {
+      width: 100%;
+      padding: 0.875rem;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 1rem;
+    }
+    button.primary {
+      background: #6366f1;
+      color: white;
+    }
+    button.primary:hover { background: #4f46e5; }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .log-area {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      display: none;
+    }
+    .log-area .ok { color: #34d399; }
+    .log-area .err { color: #f87171; }
+    .log-area .info { color: #94a3b8; }
+    .log-area .warn { color: #fbbf24; }
+    .progress {
+      height: 4px;
+      background: #334155;
+      border-radius: 2px;
+      margin-top: 1rem;
+      overflow: hidden;
+      display: none;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #6366f1;
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    .result {
+      background: #064e3b;
+      border: 1px solid #065f46;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-top: 1rem;
+      display: none;
+      text-align: center;
+    }
+    .result h3 { color: #34d399; margin-bottom: 0.5rem; }
+    .result a {
+      color: #34d399;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin: 2px;
+    }
+    .tag.backend { background: #1e40af; color: #93c5fd; }
+    .tag.frontend { background: #065f46; color: #6ee7b7; }
+    .tag.sec { background: #7c2d12; color: #fdba74; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚡ SubFlow → Trello</h1>
+    <p class="subtitle">Crée automatiquement le board Trello avec toutes les tâches du projet</p>
+
+    <!-- Étape 1 -->
+    <div class="step">
+      <h3><span class="num">1</span> Obtenir ta clé API Trello</h3>
+      <p>
+        Va sur <a href="https://trello.com/power-ups/admin" target="_blank">trello.com/power-ups/admin</a>
+        → Clique sur ton Power-Up ou en crée un nouveau → Copie la <strong>API Key</strong>.
+        <br><br>
+        Ou va directement sur <a href="https://trello.com/app-key" target="_blank">trello.com/app-key</a>
+      </p>
+      <input type="text" id="apiKey" placeholder="Colle ta clé API ici (32 caractères)" maxlength="40">
+    </div>
+
+    <!-- Étape 2 -->
+    <div class="step">
+      <h3><span class="num">2</span> Autoriser l'accès</h3>
+      <p>Clique ci-dessous pour autoriser cette page à créer un board sur ton compte Trello.</p>
+      <button class="primary" id="btnAuth" onclick="authorize()">Autoriser Trello</button>
+      <input type="text" id="token" placeholder="Colle le token d'autorisation ici" style="margin-top: 0.75rem">
+    </div>
+
+    <!-- Étape 3 -->
+    <div class="step">
+      <h3><span class="num">3</span> Créer le board</h3>
+      <p>
+        Le board sera créé avec <strong>3 listes</strong> et <strong>96 cartes</strong> couvrant tout le projet :
+        backend, frontend, sécurité, tests, DevOps.
+      </p>
+      <div style="margin-top:0.5rem">
+        <span class="tag backend">Backend</span>
+        <span class="tag frontend">Frontend</span>
+        <span class="tag sec">Sécurité</span>
+        <span class="tag" style="background:#3b0764;color:#d8b4fe">RBAC</span>
+        <span class="tag" style="background:#713f12;color:#fde047">Paiement</span>
+        <span class="tag" style="background:#1e3a5f;color:#7dd3fc">DevOps</span>
+      </div>
+      <button class="primary" id="btnCreate" onclick="createBoard()" disabled>🚀 Créer le Board Trello</button>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress" id="progress">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Log -->
+    <div class="log-area" id="logArea"></div>
+
+    <!-- Résultat -->
+    <div class="result" id="result">
+      <h3>✅ Board créé avec succès !</h3>
+      <p style="color:#6ee7b7;margin-bottom:0.5rem">Ton board Trello est prêt.</p>
+      <a id="boardLink" href="#" target="_blank">Ouvrir le Board →</a>
+    </div>
+  </div>
+
+  <script>
+    // ─── Données du projet ──────────────────────────────────
+    const BOARD_NAME = 'SubFlow SaaS — Gestion de Projet';
+
+    const LISTS = ['✅ TERMINÉ', '🔧 EN COURS', '📋 À FAIRE'];
+
+    const LABEL_COLORS = {
+      'Backend':    'blue',
+      'Frontend':   'green',
+      'Sécurité':   'orange',
+      'Auth':       'purple',
+      'RBAC':       'purple',
+      'Paiement':   'yellow',
+      'DevOps':     'sky',
+      'Test':       'pink',
+      'Documentation': 'lime',
+      'Database':   'blue',
+      'Service':    'blue',
+      'API':        'blue',
+      'Design':     'green',
+      'Composant':  'green',
+      'Pages':      'green',
+      'Layout':     'green',
+      'Utilitaire': 'green',
+      'Config':     'orange',
+      'Setup':      'black',
+      'Métier':     'yellow',
+      'E2E':        'pink',
+      'QR Code':    'yellow',
+      'UX':         'green',
+      'PWA':        'green',
+      'Analytics':  'sky',
+      'Notifications':'sky',
+      'Option B':   'orange',
+      'CI/CD':      'sky',
+      'Deploy':     'sky',
+      'Monitoring': 'sky',
+      'Audit':      'orange',
+      'i18n':       'lime',
+      'Performance':'sky',
+    };
+
+    const CARDS = [
+      // ═══ ✅ TERMINÉ ═══
+      // Backend - Setup
+      {list:0, name:"[SETUP] Node.js + Express 5 + Sequelize", desc:"Projet initialisé avec Express 5, Sequelize 6, structure MVC complète (controllers/, models/, routes/, services/, middlewares/).", labels:["Backend","Setup"]},
+      {list:0, name:"[SETUP] PostgreSQL + Config BDD", desc:"config/database.js, pool de connexions, dialecte postgres, logging désactivé en prod.", labels:["Backend","Database"]},
+      {list:0, name:"[SETUP] .env.example complet", desc:"Template avec toutes les variables : JWT_SECRET, DB_*, ENCRYPTION_KEY, SMTP_*, MTN_*, AIRTEL_*, VAPID_*, LICENSE_*, MONITOR_API_KEY.", labels:["Backend","Config"]},
+      {list:0, name:"[SETUP] Frontend React + Vite 5 + Tailwind", desc:"SPA React 19, Vite 5.4.21 (stabilité Windows), Tailwind CSS v3, proxy API vers :3000.", labels:["Frontend","Setup"]},
+
+      // Models
+      {list:0, name:"[MODEL] Organization", desc:"UUID, name, slug (unique indexé), status ENUM (active/suspended/trial), settings JSONB, timestamps.", labels:["Backend","Database"]},
+      {list:0, name:"[MODEL] User (6 rôles)", desc:"UUID, email (unique), password (bcrypt 12), role ENUM (superadmin/admin/manager/staff/accountant/user), firstName, lastName, phone, organizationId.", labels:["Backend","Database"]},
+      {list:0, name:"[MODEL] Plan", desc:"UUID, name, price, durationDays, description, isActive, organizationId. Plans d'abonnement par org.", labels:["Backend","Database"]},
+      {list:0, name:"[MODEL] Subscription", desc:"UUID, userId, planId, status (active/grace_period/expired), startDate, endDate. Lazy Evaluation.", labels:["Backend","Database"]},
+      {list:0, name:"[MODEL] Transaction", desc:"UUID, amount, currency (XAF), status, method (mtn_momo/airtel_money), provider, providerRef, webhookData JSONB.", labels:["Backend","Database"]},
+      {list:0, name:"[MODEL] Ticket", desc:"UUID, subject, message, status (open/in_progress/resolved/closed), priority, responses JSONB.", labels:["Backend","Database"]},
+      {list:0, name:"[MODEL] AuditLog + AdminLog", desc:"Logs de communication (email/SMS/push) et logs d'actions admin (rôle, suspension, impersonation).", labels:["Backend","Database"]},
+      {list:0, name:"[MODEL] Announcement + PushSubscription", desc:"Annonces globales (titre, message, type, targetRole) et abonnements push navigateur.", labels:["Backend","Database"]},
+
+      // Sécurité
+      {list:0, name:"[SEC] Helmet — Headers HTTP", desc:"CSP strict, HSTS 1 an, X-Frame DENY, X-Content-Type nosniff, COEP, CORP same-origin.", labels:["Backend","Sécurité"]},
+      {list:0, name:"[SEC] Rate Limiting", desc:"Login : 10 req/15min. API : 100 req/15min. Réponse 429 + Retry-After.", labels:["Backend","Sécurité"]},
+      {list:0, name:"[SEC] Anti-Scanner", desc:"Traque les 404 par IP. 5 x 404 → ban temporaire. Protection nmap/nikto/dirb.", labels:["Backend","Sécurité"]},
+      {list:0, name:"[SEC] Validateur d'environnement", desc:"CRASH si JWT_SECRET < 32 chars, valeur par défaut détectée, DB_PASS manquant, ENCRYPTION_KEY absent.", labels:["Backend","Sécurité"]},
+      {list:0, name:"[SEC] Chiffrement AES-256-GCM", desc:"encryptionService.js : IV unique, AuthTag intégrité. Pour numéros MoMo en BDD.", labels:["Backend","Sécurité"]},
+      {list:0, name:"[SEC] Upload sécurisé (Magic Bytes)", desc:"Vérification signature binaire. Max 5MB. Types : JPEG, PNG, PDF. Nom UUID.", labels:["Backend","Sécurité"]},
+      {list:0, name:"[SEC] Webhook HMAC Validation", desc:"Signature HMAC-SHA256 sur chaque webhook MTN/Airtel. Rejet 401 si invalide. Idempotence.", labels:["Backend","Sécurité"]},
+
+      // Auth + RBAC
+      {list:0, name:"[AUTH] Login universel", desc:"POST /api/auth/login : bcrypt verify, JWT HS256 24h, payload {id, role, orgId}. Redirection par rôle.", labels:["Backend","Auth"]},
+      {list:0, name:"[AUTH] Register Admin + Org", desc:"POST /api/auth/register : Crée Org + User admin en transaction Sequelize.", labels:["Backend","Auth"]},
+      {list:0, name:"[AUTH] Register Client self-service", desc:"POST /api/auth/register-client : Inscription dans org existante, rôle FORCÉ 'user'.", labels:["Backend","Auth"]},
+      {list:0, name:"[AUTH] Liste organisations publiques", desc:"GET /api/auth/organizations : orgs actives (id, name, slug) pour inscription client.", labels:["Backend","Auth"]},
+      {list:0, name:"[RBAC] Middleware 28 permissions", desc:"Matrice complète : 6 rôles × 28 actions. checkPermission(), hasPermission(), getRolePermissions().", labels:["Backend","RBAC"]},
+      {list:0, name:"[RBAC] Isolation multi-tenant", desc:"Chaque requête scopée par organizationId du JWT. Impossible d'accéder aux données d'une autre org.", labels:["Backend","RBAC"]},
+
+      // Paiement
+      {list:0, name:"[PAY] PaymentManager (orchestrateur)", desc:"Routing auto vers MTN/Airtel/Agrégateur selon l'opérateur détecté. Pattern Strategy.", labels:["Backend","Paiement"]},
+      {list:0, name:"[PAY] MTN Congo Provider", desc:"Intégration API MTN Mobile Money Congo. Initiation paiement + callback webhook.", labels:["Backend","Paiement"]},
+      {list:0, name:"[PAY] Airtel Congo Provider", desc:"Intégration API Airtel Money Congo. Même interface BaseProvider.", labels:["Backend","Paiement"]},
+      {list:0, name:"[PAY] Agrégateur (fallback)", desc:"Provider de fallback si l'API directe échoue.", labels:["Backend","Paiement"]},
+      {list:0, name:"[PAY] Mock Provider (tests)", desc:"Provider simulé pour le développement. Simule succès/échec/pending.", labels:["Backend","Paiement"]},
+      {list:0, name:"[PAY] Webhook Controller", desc:"Réception callbacks, vérification HMAC, idempotence, maj Transaction + Subscription.", labels:["Backend","Paiement"]},
+
+      // Services
+      {list:0, name:"[SVC] Subscription Service (Lazy Eval)", desc:"Calcul dynamique du statut à chaque requête. Pas de CRON. active → grace → expired.", labels:["Backend","Service"]},
+      {list:0, name:"[SVC] Stats Service (Analytics)", desc:"MRR, Churn Rate, Growth, Plan Distribution, Renewal Forecast. Scopé par org.", labels:["Backend","Service"]},
+      {list:0, name:"[SVC] PDF Service (Reçus)", desc:"PDFKit : numéro transaction, QR code, logo org, détails paiement.", labels:["Backend","Service"]},
+      {list:0, name:"[SVC] Notification Service (multi-canal)", desc:"Email (nodemailer/SMTP), SMS (agrégateur), Push (web-push/VAPID). Templates.", labels:["Backend","Service"]},
+      {list:0, name:"[SVC] Logger Service (Winston)", desc:"Fichiers rotatifs + console. error/warn/info/debug. Zéro token dans les logs.", labels:["Backend","Service"]},
+      {list:0, name:"[SVC] Licence Service (Option B)", desc:"Validation JWT de licence. Vérification expiration. Mono-tenant si LICENSE_KEY.", labels:["Backend","Service"]},
+      {list:0, name:"[SVC] i18n (FR/EN)", desc:"Détection langue Accept-Language ou ?lang=. locales/fr.json et en.json.", labels:["Backend","Service"]},
+      {list:0, name:"[SVC] Push Service (VAPID)", desc:"Web Push notifications. Enregistrement subscriptions. Envoi ciblé.", labels:["Backend","Service"]},
+
+      // API
+      {list:0, name:"[API] System Mode (Platform/Licence)", desc:"GET /api/v1/system/mode : 'platform' ou 'license' + org par défaut.", labels:["Backend","API"]},
+      {list:0, name:"[API] QR Token signé HMAC-SHA256", desc:"GET /api/v1/system/qr-token : Token rotatif 5min. userId, subId, orgId, timeSlot, hash.", labels:["Backend","API"]},
+      {list:0, name:"[API] Vérification QR Code", desc:"POST /api/v1/system/verify-qr : Scanne QR → vérifie signature + expiration + statut.", labels:["Backend","API"]},
+      {list:0, name:"[API] Super-Admin Impersonation", desc:"POST /impersonate/:userId : JWT temporaire 1h pour 'voir comme'. Loggé AdminLog.", labels:["Backend","API"]},
+      {list:0, name:"[API] Annonces globales CRUD", desc:"CRUD /announcements : titre, message, type, targetRole, targetOrg.", labels:["Backend","API"]},
+      {list:0, name:"[API] Client self-service APIs", desc:"/api/client/* : profil, factures, paiement, consommation. Auth + tenant isolation.", labels:["Backend","API"]},
+      {list:0, name:"[API] Admin Dashboard APIs", desc:"/api/v1/admin/* : stats, membres CRUD, export CSV, templates, tickets.", labels:["Backend","API"]},
+
+      // Frontend
+      {list:0, name:"[FE] Design System Dark Mode", desc:"Tailwind CSS. Composants : Card, Button, Input (sanitization HTML), Spinner.", labels:["Frontend","Design"]},
+      {list:0, name:"[FE] apiClient (Axios + JWT)", desc:"Intercepteur : injection Bearer. Auto-logout 401/403. Erreurs normalisées.", labels:["Frontend","Auth"]},
+      {list:0, name:"[FE] AuthContext + Auto-logout 30min", desc:"Context React global. localStorage (sf_token, sf_user, sf_org). getDefaultPath.", labels:["Frontend","Auth"]},
+      {list:0, name:"[FE] ProtectedRoute + RoleGuard", desc:"Redirection /login si pas de token. Vérification rôle vs allowedRoles[]. 403/404.", labels:["Frontend","Auth"]},
+      {list:0, name:"[FE] Page Login", desc:"Email/password. Liens /register (admin) + /join (client). Redirect si connecté.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page Register (Admin)", desc:"Inscription admin : nom org, slug, email, password. Crée Org + User.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page ClientRegister (/join)", desc:"Mode Platform/Licence. Étape 1 : choix org. Étape 2 : formulaire. Validation UUID.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Dashboard Client complet", desc:"Widget statut vert/orange/rouge, QR Code, jours restants, factures récentes, CTA paiement.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page Abonnement + Paiement MoMo", desc:"Cards plans, tunnel paiement, détection opérateur auto (Congo), polling webhook.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Composant SecureQrCode", desc:"QR rotatif 5min, compteur, grisé si expiré, badge Grâce, instruction.", labels:["Frontend","Composant"]},
+      {list:0, name:"[FE] Page Factures + PDF", desc:"Liste paginée, badges statut, téléchargement PDF via API authentifiée.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page Profil client", desc:"Édition prénom, nom, genre, téléphone, entreprise.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page Paiement Rapide", desc:"Sauvegarde méthode MoMo (chiffré AES-256-GCM). Ajout/modif/suppression.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page Tickets Client", desc:"Création ticket + liste 'Mes tickets' avec statut et réponses.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Dashboard Admin", desc:"KPI : total abonnés, MRR, expirations proches, revenus du mois.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page Membres Admin", desc:"Liste + ajout + changement de rôle RBAC. Recherche et filtrage.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page Analytics Admin", desc:"KPI : MRR, Churn, Croissance, Répartition plans.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page Tickets Admin", desc:"Gestion tickets : filtrage statut/priorité, réponse inline.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page Export Admin", desc:"Export CSV avec filtres dates/statut. Téléchargement authentifié.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page Paramètres Admin", desc:"Templates notification : expiry_reminder, payment_confirmation, welcome.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Dashboard Super-Admin", desc:"KPI globaux : total orgs, users, revenus, orgs actives.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page Organisations SA", desc:"Liste orgs + recherche + filtres + actions suspend/activate.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page Audit Logs SA", desc:"Timeline événements sécurité. Filtres action. Pagination.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] Page Système SA", desc:"Annonces CRUD, versions, statut sécurité.", labels:["Frontend","Pages"]},
+      {list:0, name:"[FE] DashboardLayout + Sidebar", desc:"Sidebar responsive + hamburger. Liens dynamiques par rôle. Badge rôle.", labels:["Frontend","Layout"]},
+      {list:0, name:"[FE] phoneUtils (détection opérateur)", desc:"MTN: 04/05/06, Airtel: 01/02/03/07. Formatage. getOperatorInfo().", labels:["Frontend","Utilitaire"]},
+      {list:0, name:"[DOC] Documentation Technique", desc:"DOCUMENTATION_TECHNIQUE.md : architecture, 9 couches sécu, RBAC, 40+ endpoints, paiement, déploiement.", labels:["Documentation"]},
+
+      // ═══ 🔧 EN COURS ═══
+      {list:1, name:"Configurer PostgreSQL en local", desc:"Installer PostgreSQL, créer la base, configurer .env (DB_HOST, DB_NAME, DB_USER, DB_PASS).", labels:["Backend","Config"]},
+      {list:1, name:"Générer les secrets de production", desc:"node -e \"console.log(require('crypto').randomBytes(64).toString('hex'))\" pour JWT_SECRET, ENCRYPTION_KEY, etc.", labels:["Backend","Sécurité"]},
+      {list:1, name:"Test flux Login → Dashboard", desc:"Avec PostgreSQL : créer admin via /register, client via /join, vérifier redirection par rôle.", labels:["Test","E2E"]},
+      {list:1, name:"Test paiement MoMo E2E", desc:"MockProvider en dev : initier paiement frontend, vérifier polling, simuler webhook callback.", labels:["Test","Paiement"]},
+      {list:1, name:"Test QR Code rotation", desc:"Vérifier changement toutes les 5 min, compteur, QR grisé si expiré.", labels:["Test","QR Code"]},
+
+      // ═══ 📋 À FAIRE ═══
+      {list:2, name:"Configurer SMTP (emails)", desc:"Choisir provider (Brevo, Mailgun). Remplir SMTP_HOST/PORT/USER/PASS. Tester envoi.", labels:["Backend","Config"]},
+      {list:2, name:"Clés API MTN Congo", desc:"Contacter MTN Congo Business. Configurer MTN_CONGO_API_KEY et WEBHOOK_SECRET.", labels:["Backend","Paiement"]},
+      {list:2, name:"Clés API Airtel Money", desc:"Contacter Airtel Congo. Configurer AIRTEL_CONGO_API_KEY et WEBHOOK_SECRET.", labels:["Backend","Paiement"]},
+      {list:2, name:"Créer le premier Super-Admin", desc:"Créer manuellement en BDD ou via script CLI sécurisé. Tester /superadmin.", labels:["Backend","Auth"]},
+      {list:2, name:"HTTPS + Reverse Proxy", desc:"Nginx/Caddy devant Express. SSL/TLS Let's Encrypt. HTTP→HTTPS.", labels:["DevOps","Sécurité"]},
+      {list:2, name:"Backup automatique PostgreSQL", desc:"pg_dump journalier. Stockage volume séparé ou S3.", labels:["DevOps","Database"]},
+      {list:2, name:"Tests unitaires (Jest)", desc:"Jest : authController, subscriptionService, encryptionService, RBAC middleware.", labels:["Test","Backend"]},
+      {list:2, name:"Tests d'intégration API", desc:"Supertest : login, register, subscribe, webhook, QR verify.", labels:["Test","Backend"]},
+      {list:2, name:"CI/CD Pipeline", desc:"GitHub Actions : lint, tests, build frontend, deploy auto.", labels:["DevOps","CI/CD"]},
+      {list:2, name:"Responsive final mobile/tablette", desc:"Vérifier sur mobile réel + Chrome DevTools. Corriger overflow.", labels:["Frontend","UX"]},
+      {list:2, name:"PWA — Service Worker complet", desc:"Cache stratégique, push listener, background sync paiements.", labels:["Frontend","PWA"]},
+      {list:2, name:"Page Changement mot de passe", desc:"Écran obligatoire première connexion si compte créé par admin.", labels:["Frontend","Auth"]},
+      {list:2, name:"Page Mot de passe oublié", desc:"Email → token 15min → reset password. Routes forgot-password / reset-password.", labels:["Frontend","Auth"]},
+      {list:2, name:"Scanner QR Code (Staff)", desc:"/admin/scanner : caméra → scan QR → POST /verify-qr → résultat (Valide/Expiré + infos).", labels:["Frontend","Métier"]},
+      {list:2, name:"Dashboard Analytics (graphiques)", desc:"Intégrer Chart.js ou Recharts : MRR historique, churn trend, inscriptions/jour.", labels:["Frontend","Analytics"]},
+      {list:2, name:"Push Notifications temps réel", desc:"Service worker pour recevoir push. Badge cloche dans le header.", labels:["Frontend","Notifications"]},
+      {list:2, name:"Mode Licence — Branding custom", desc:"Option B : changer logo, couleurs, nom app depuis les paramètres admin.", labels:["Frontend","Option B"]},
+      {list:2, name:"Documentation API Swagger", desc:"swagger-jsdoc + swagger-ui-express. Documenter tous les endpoints.", labels:["Documentation","API"]},
+      {list:2, name:"Monitoring & Alerting", desc:"Grafana, UptimeRobot, ou custom. Alertes email si serveur tombe.", labels:["DevOps","Monitoring"]},
+      {list:2, name:"Optimisation performance", desc:"Lazy loading React, compression gzip, cache Redis (optionnel).", labels:["Backend","Performance"]},
+      {list:2, name:"Migrations Sequelize (production)", desc:"Fichiers de migration au lieu de sync(). Mises à jour sans perte de données.", labels:["Backend","Database"]},
+      {list:2, name:"Audit de sécurité externe", desc:"Pentest OWASP ZAP / Burp Suite. Vérifier top 10 OWASP.", labels:["Sécurité","Audit"]},
+      {list:2, name:"Internationalisation frontend", desc:"react-i18next pour multi-langue (FR défaut, EN option).", labels:["Frontend","i18n"]},
+      {list:2, name:"Déploiement production", desc:"VPS (DigitalOcean/Render/Railway). Domaine. Deploy backend + frontend.", labels:["DevOps","Deploy"]},
+    ];
+
+    // ─── UI helpers ─────────────────────────────────────────
+    let apiKey = '', token = '';
+
+    document.getElementById('apiKey').addEventListener('input', (e) => {
+      apiKey = e.target.value.trim();
+      checkReady();
+    });
+    document.getElementById('token').addEventListener('input', (e) => {
+      token = e.target.value.trim();
+      checkReady();
+    });
+
+    function checkReady() {
+      document.getElementById('btnCreate').disabled = !(apiKey.length >= 20 && token.length >= 20);
+    }
+
+    function authorize() {
+      if (!apiKey || apiKey.length < 20) {
+        alert('Colle d\'abord ta clé API (étape 1)');
+        return;
+      }
+      const url = `https://trello.com/1/authorize?expiration=1day&name=SubFlow+Board+Creator&scope=read,write&response_type=token&key=${apiKey}`;
+      window.open(url, '_blank');
+    }
+
+    function log(msg, type = 'info') {
+      const area = document.getElementById('logArea');
+      area.style.display = 'block';
+      area.innerHTML += `<div class="${type}">${msg}</div>`;
+      area.scrollTop = area.scrollHeight;
+    }
+
+    function setProgress(pct) {
+      const bar = document.getElementById('progressBar');
+      const container = document.getElementById('progress');
+      container.style.display = 'block';
+      bar.style.width = pct + '%';
+    }
+
+    async function trelloFetch(endpoint, method = 'GET', body = null) {
+      const url = `https://api.trello.com/1${endpoint}${endpoint.includes('?') ? '&' : '?'}key=${apiKey}&token=${token}`;
+      const opts = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(url, opts);
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Trello API ${res.status}: ${errText}`);
+      }
+      return res.json();
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // ─── Création du board ──────────────────────────────────
+    async function createBoard() {
+      const btn = document.getElementById('btnCreate');
+      btn.disabled = true;
+      btn.textContent = 'Création en cours...';
+
+      try {
+        const totalSteps = 1 + LISTS.length + Object.keys(LABEL_COLORS).length + CARDS.length;
+        let step = 0;
+
+        // 1. Créer le board
+        log('📋 Création du board...', 'info');
+        const board = await trelloFetch('/boards', 'POST', {
+          name: BOARD_NAME,
+          defaultLists: false,
+          prefs_background: 'blue',
+          desc: 'Board de gestion du projet SubFlow SaaS — Plateforme de gestion d\'abonnements (Congo-Brazzaville). Stack: Node.js + Express 5 + React 19 + PostgreSQL.'
+        });
+        step++;
+        setProgress((step / totalSteps) * 100);
+        log(`✅ Board créé : ${board.shortUrl}`, 'ok');
+
+        // 2. Créer les listes
+        const listIds = [];
+        for (let i = LISTS.length - 1; i >= 0; i--) {
+          const list = await trelloFetch('/lists', 'POST', {
+            name: LISTS[i],
+            idBoard: board.id,
+            pos: 'top'
+          });
+          listIds[i] = list.id;
+          step++;
+          setProgress((step / totalSteps) * 100);
+          log(`📝 Liste : ${LISTS[i]}`, 'ok');
+          await sleep(100);
+        }
+
+        // 3. Créer les labels
+        const labelMap = {};
+        for (const [name, color] of Object.entries(LABEL_COLORS)) {
+          try {
+            const label = await trelloFetch(`/boards/${board.id}/labels`, 'POST', {
+              name: name,
+              color: color
+            });
+            labelMap[name] = label.id;
+            step++;
+            setProgress((step / totalSteps) * 100);
+            await sleep(50);
+          } catch (e) {
+            log(`⚠️ Label ${name} : ${e.message}`, 'warn');
+            step++;
+            setProgress((step / totalSteps) * 100);
+          }
+        }
+        log(`🏷️ ${Object.keys(labelMap).length} labels créés`, 'ok');
+
+        // 4. Créer les cartes
+        let created = 0;
+        for (const card of CARDS) {
+          try {
+            const cardLabels = card.labels
+              .map(l => labelMap[l])
+              .filter(Boolean)
+              .join(',');
+
+            await trelloFetch('/cards', 'POST', {
+              name: card.name,
+              desc: card.desc,
+              idList: listIds[card.list],
+              idLabels: cardLabels,
+              pos: 'bottom'
+            });
+            created++;
+            step++;
+            setProgress((step / totalSteps) * 100);
+
+            if (created % 10 === 0) {
+              log(`📌 ${created} cartes créées...`, 'info');
+            }
+            await sleep(120); // Rate limit Trello
+          } catch (e) {
+            log(`❌ Carte "${card.name}" : ${e.message}`, 'err');
+            step++;
+            setProgress((step / totalSteps) * 100);
+            await sleep(500);
+          }
+        }
+
+        log(`\n🎉 Terminé ! ${created} cartes créées sur ${CARDS.length}.`, 'ok');
+        setProgress(100);
+
+        // Afficher le résultat
+        const result = document.getElementById('result');
+        result.style.display = 'block';
+        document.getElementById('boardLink').href = board.shortUrl;
+        document.getElementById('boardLink').textContent = `Ouvrir "${BOARD_NAME}" →`;
+
+      } catch (e) {
+        log(`\n❌ ERREUR : ${e.message}`, 'err');
+        btn.disabled = false;
+        btn.textContent = '🚀 Réessayer';
+      }
+    }
+  </script>
+</body>
+</html>
